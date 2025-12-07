@@ -1,0 +1,74 @@
+services:
+  # PostgreSQL database for backend memory/state persistence
+  postgres:
+    image: postgres:16-alpine
+    container_name: llamaindex-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: llamaindex_agents
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Arize Phoenix for LLM observability/tracing
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: llamaindex-phoenix
+    ports:
+      - "6006:6006"
+    volumes:
+      - phoenix_data:/root/.phoenix
+    environment:
+      - PHOENIX_WORKING_DIR=/root/.phoenix
+
+  # FastAPI Python backend
+  backend:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: llamaindex-backend
+    ports:
+      - "6001:6001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-https://api.openai.com/v1}
+      - MEMORY_DATABASE_URI=postgresql+asyncpg://postgres:postgres@postgres:5432/llamaindex_agents
+      - PHOENIX_ENABLED=${PHOENIX_ENABLED:-true}
+      - PHOENIX_ENDPOINT=http://phoenix:6006
+      - PHOENIX_BATCH_PROCESSOR=${PHOENIX_BATCH_PROCESSOR:-true}
+      - PHOENIX_PROJECT_NAME=${PHOENIX_PROJECT_NAME:-llamaindex-agents}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY:-}
+      - PERPLEXITY_API_BASE_URL=${PERPLEXITY_API_BASE_URL:-https://api.perplexity.ai}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # React frontend served via nginx
+  frontend:
+    build:
+      context: ./agent-ui
+      dockerfile: Dockerfile
+    container_name: llamaindex-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  phoenix_data:
+    driver: local
+
