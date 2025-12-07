@@ -133,6 +133,61 @@ npm run dev
 | POST | `/{flow_id}/stream` | Run flow with SSE streaming |
 | DELETE | `/{flow_id}/session` | Clear session |
 
+## GenAI & Agentic Concepts
+
+This repository serves as a **reference implementation** covering major patterns in LlamaIndex's agentic framework.
+
+### Core Agentic Patterns
+
+#### 1. Single Agents (ReAct Pattern)
+Tool-equipped agents that can reason and act using external tools:
+- `MathAgent` - Mathematical operations
+- `ResearchAgent` - Web search via Perplexity
+- `MarketAgent` - Market data with HITL protection
+- `WriterAgent` / `CriticAgent` - Content generation and review
+
+#### 2. Multi-Agent Teams
+Two coordination patterns implemented:
+
+| Pattern | Example | How It Works |
+|---------|---------|--------------|
+| **Handoff** | `MarketResearchTeam` | Agents use `can_handoff_to` to pass control dynamically |
+| **Orchestrator** | `ResearchMathOrchestratorTeam` | Central agent uses specialized agents as tools (`agent.as_tool()`) |
+
+#### 3. Event-Driven Flows
+Step-based execution with `@step` decorators and event routing:
+- `StoryCriticFlow` demonstrates **branching & looping**:
+  - Research → Write → Critique
+  - If rejected: loop back to rewrite (max 3 attempts)
+  - If approved: return final article
+
+### Tool Integration
+
+| Tool | Implementation | Purpose |
+|------|----------------|---------|
+| Math tools | `add()`, `multiply()` | Simple function tools |
+| Market tools | `get_index()`, `push_index()` | HITL-protected dangerous operations |
+| Web search | `web_search()` via Perplexity | External LLM as a tool |
+
+### Advanced Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Human-in-the-Loop (HITL)** | Pause workflows for human approval, serialize/restore context |
+| **Streaming (SSE)** | Real-time token streaming with `AgentStream` events |
+| **Memory Persistence** | Per-session conversation history in PostgreSQL |
+| **Async Execution** | Fire-and-forget flows with status polling API |
+| **Observability** | OpenTelemetry + Phoenix for full LLM trace visibility |
+
+### Architecture Patterns
+
+| Pattern | Implementation |
+|---------|----------------|
+| Registry Pattern | `agent_registry`, `team_registry`, `flow_registry` |
+| Base Class Abstraction | `BaseAgent`, `BaseTeam`, `BaseFlow` with shared behaviors |
+| DTO Pattern | Separate request/response schemas in `api/dto/` |
+| Session Management | Session IDs for memory isolation |
+
 ## Project Structure
 
 ```
