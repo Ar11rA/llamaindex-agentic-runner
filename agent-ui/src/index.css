@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* Blue Theme CSS Variables */
+:root {
+  /* Navy Blue - darkest, for backgrounds */
+  --color-navy-950: #0a1628;
+  --color-navy-900: #0f1f38;
+  --color-navy-800: #152847;
+  --color-navy-700: #1c3557;
+
+  /* Royal Blue - primary accent */
+  --color-royal-600: #2563eb;
+  --color-royal-500: #3b82f6;
+  --color-royal-400: #60a5fa;
+
+  /* Sky Blue - highlights and accents */
+  --color-sky-300: #7dd3fc;
+  --color-sky-200: #bae6fd;
+  --color-sky-100: #e0f2fe;
+
+  /* Text colors */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-700);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-royal-600);
+}
+
+/* Base styles */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-navy-950);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Message streaming animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: '▋';
+  animation: blink 1s infinite;
+  color: var(--color-royal-500);
+}
+
+/* Smooth message appearance */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-appear {
+  animation: slideIn 0.2s ease-out;
+}
