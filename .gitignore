@@ -10,7 +10,6 @@ wheels/
 # Virtual environments
 .venv
 
-# Environment files (but keep sample)
-.env
-!.env.sample
+# Environment files (but keep samples)
+*.env
 node_modules/
