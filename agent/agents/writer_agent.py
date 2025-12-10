@@ -1,5 +1,6 @@
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional
 
+from config import LLMProvider
 from agents.base import BaseAgent
 
 
@@ -52,6 +53,7 @@ When given a topic or rough notes, transform them into publication-ready article
 
     def __init__(
         self,
+        provider: Optional[LLMProvider] = None,
         model: str | None = None,
         temperature: float | None = None,
         system_prompt: str | None = None,
@@ -59,6 +61,7 @@ When given a topic or rough notes, transform them into publication-ready article
     ):
         # Use heavier model by default, allow override
         super().__init__(
+            provider=provider,  # ADD THIS
             model=model or self.DEFAULT_MODEL,
             temperature=temperature if temperature is not None else 0.7,
             system_prompt=system_prompt,

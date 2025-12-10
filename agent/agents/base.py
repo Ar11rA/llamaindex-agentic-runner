@@ -4,12 +4,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, List, Callable, AsyncGenerator, Any, Union
 
-from llama_index.llms.openai import OpenAI
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.agent.workflow.workflow_events import AgentStream
+from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, InputRequiredEvent, HumanResponseEvent
 
-from config import get_settings, db_manager
+from config import get_settings, db_manager, LLMProvider, create_llm
 
 
 @dataclass
@@ -44,6 +44,7 @@ class BaseAgent(ABC):
         - get_tools(): Method returning the list of tools
 
     Supports Human-in-the-Loop (HITL) via context serialization.
+    Supports multiple LLM providers via the factory pattern.
     """
 
     NAME: str
@@ -52,24 +53,27 @@ class BaseAgent(ABC):
 
     def __init__(
         self,
+        provider: Optional[LLMProvider] = None,
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         system_prompt: Optional[str] = None,
         timeout: float = 600.0,  # 10 min default for HITL
+        llm: Optional[LLM] = None,  # Allow injecting custom LLM
     ):
         self._logger = logging.getLogger(f"agents.{self.NAME}")
         settings = get_settings()
 
+        self._provider = provider or settings.llm_provider
         self._model = model or settings.default_model
         self._temperature = (
             temperature if temperature is not None else settings.default_temperature
         )
 
-        self.llm = OpenAI(
+        # Use injected LLM or create via factory
+        self.llm = llm or create_llm(
+            provider=self._provider,
             model=self._model,
             temperature=self._temperature,
-            api_base=settings.openai_api_base,
-            api_key=settings.openai_api_key,
         )
 
         self.system_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
@@ -86,7 +90,8 @@ class BaseAgent(ABC):
         )
 
         self._logger.info(
-            "Initialized with model=%s, temperature=%s, timeout=%s",
+            "Initialized with provider=%s, model=%s, temperature=%s, timeout=%s",
+            self._provider,
             self._model,
             self._temperature,
             timeout,

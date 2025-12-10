@@ -3,7 +3,7 @@ Shared pytest fixtures for testing LlamaIndex Agents.
 
 Provides mocks for:
 - Settings (observability disabled, mock API keys)
-- LLM calls (OpenAI)
+- LLM calls (via factory)
 - Database operations
 - FastAPI test client
 """
@@ -31,9 +31,10 @@ os.environ["PERPLEXITY_API_KEY"] = "test-perplexity-key"
 @pytest.fixture
 def mock_settings():
     """Override settings with test values."""
-    from config.settings import Settings
+    from config.settings import Settings, LLMProvider
 
     return Settings(
+        llm_provider=LLMProvider.OPENAI,
         openai_api_key="test-openai-key",
         openai_api_base="https://api.openai.com/v1",
         default_model="gpt-4-test",
@@ -50,7 +51,9 @@ def patch_settings(mock_settings):
     with patch("config.settings.get_settings", return_value=mock_settings):
         # Also patch in config module
         with patch("config.get_settings", return_value=mock_settings):
-            yield mock_settings
+            # Patch in llm_factory module
+            with patch("config.llm_factory.get_settings", return_value=mock_settings):
+                yield mock_settings
 
 
 # -----------------------------------------------------------------------------
@@ -65,21 +68,60 @@ def mock_llm_response():
 
 
 @pytest.fixture
-def mock_openai_llm(mock_llm_response):
-    """Mock the OpenAI LLM to return canned responses."""
-    mock_llm = MagicMock()
+def mock_llm(mock_llm_response):
+    """Create a mock LLM instance."""
+    mock = MagicMock()
 
     # Mock the chat method
     mock_response = MagicMock()
     mock_response.message.content = mock_llm_response
-    mock_llm.chat.return_value = mock_response
+    mock.chat.return_value = mock_response
 
     # Mock async chat
-    async_mock_response = AsyncMock(return_value=mock_response)
-    mock_llm.achat = async_mock_response
+    mock.achat = AsyncMock(return_value=mock_response)
 
+    # Mock complete methods
+    mock.complete.return_value = MagicMock(text=mock_llm_response)
+    mock.acomplete = AsyncMock(return_value=MagicMock(text=mock_llm_response))
+
+    return mock
+
+
+@pytest.fixture
+def mock_openai_llm(mock_llm):
+    """Mock the OpenAI LLM to return canned responses."""
     with patch("llama_index.llms.openai.OpenAI", return_value=mock_llm):
         yield mock_llm
+
+
+@pytest.fixture
+def mock_create_llm(mock_llm):
+    """Mock the create_llm factory function to return a mock LLM."""
+    with patch("config.llm_factory.create_llm", return_value=mock_llm):
+        with patch("config.create_llm", return_value=mock_llm):
+            yield mock_llm
+
+
+@pytest.fixture(autouse=True)
+def patch_llm_factory(mock_llm):
+    """Auto-patch LLM factory for all tests to avoid real LLM calls."""
+    # Create a mock FunctionAgent that doesn't validate LLM type
+    mock_function_agent_instance = MagicMock()
+    mock_function_agent_instance.run = AsyncMock(return_value="Mock response")
+
+    # Patch OpenAI which is the default provider
+    with patch("llama_index.llms.openai.OpenAI", return_value=mock_llm):
+        # Patch FunctionAgent to avoid Pydantic validation of LLM type
+        with patch(
+            "llama_index.core.agent.workflow.FunctionAgent",
+            return_value=mock_function_agent_instance,
+        ):
+            # Also patch in agents.base where it's imported
+            with patch(
+                "agents.base.FunctionAgent",
+                return_value=mock_function_agent_instance,
+            ):
+                yield mock_llm
 
 
 # -----------------------------------------------------------------------------

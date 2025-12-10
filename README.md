@@ -212,6 +212,45 @@ llamaindex-agents/
 └── .env.example             # Environment template
 ```
 
+## Known Issues & Limitations
+
+### LLM Provider Compatibility
+
+The application supports multiple LLM providers via a factory pattern, but not all providers work with all features:
+
+| Provider | Tool-Using Agents | Toolless Agents | Notes |
+|----------|-------------------|-----------------|-------|
+| **OpenAI** | ✅ Full support | ✅ Full support | Recommended for agents with tools |
+| **Anthropic** | ❌ Broken | ✅ Works | `ToolCallBlock` not supported in LlamaIndex adapter |
+| **Gemini Vertex** | ❌ Not implemented | ✅ Works | Custom LLM doesn't implement tool interface |
+| **Bedrock Gateway** | ❌ Not implemented | ✅ Works | Custom LLM doesn't implement tool interface |
+| **Cohere** | ⚠️ Untested | ⚠️ Untested | Base URL parameter may not work correctly |
+
+**Tool-using agents:** `MathAgent`, `ResearchAgent`, `MarketAgent`  
+**Toolless agents:** `WriterAgent`, `CriticAgent`
+
+### Specific Issues
+
+1. **Anthropic + Tools**
+   - Error: `ValueError: Unsupported block type: <class 'llama_index.core.base.llms.types.ToolCallBlock'>`
+   - Cause: LlamaIndex's Anthropic adapter doesn't handle `FunctionAgent`'s tool call format
+   - Workaround: Use OpenAI for agents with tools
+
+2. **Custom LLMs (GeminiVertexLLM, BedrockGatewayLLM)**
+   - These implement basic `chat`/`complete` methods only
+   - Tool calling requires `FunctionCallingLLM` interface which is not implemented
+   - Use for toolless agents or flows only
+
+3. **Cohere Base URL**
+   - The `api_url` parameter may not be honored by LlamaIndex's Cohere adapter
+   - Standard Cohere API endpoint works; custom gateways untested
+
+### Recommendations
+
+- Use **OpenAI** as the default provider for full compatibility
+- Switch individual toolless agents to other providers via `provider=LLMProvider.X` parameter
+- Set `LLM_PROVIDER` environment variable to change the global default
+
 ## License
 
 MIT
