@@ -95,7 +95,7 @@ npm run dev
 
 ## Agentic Capabilities
 
-This repository serves as a reference implementation for LlamaIndex's agentic framework. For detailed explanations, see **[Agentic Patterns](docs/arch/agentic_patterns.md)**.
+This repository serves as a reference implementation for LlamaIndex's agentic framework. **Note: The design patterns documented in `docs/design-patterns/` are for learning and reference purposes only.** For detailed explanations of the active architecture, see **[Agentic Patterns](docs/arch/agentic_patterns.md)**.
 
 We implement three core patterns:
 1.  **Single Agents (ReAct)**: Tool-using agents (Math, Research, Market).

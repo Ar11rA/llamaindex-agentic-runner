@@ -15,12 +15,12 @@ The system consists of four main services:
 
 ```mermaid
 graph TD
-    User[User Browser] -->|HTTP/WebSocket| Frontend[Frontend (Nginx/React)]
-    Frontend -->|API Requests| Backend[Backend (FastAPI)]
-    Backend -->|Read/Write State| Postgres[(PostgreSQL)]
-    Backend -->|Trace/Log| Phoenix[Arize Phoenix]
-    Backend -->|LLM Calls| OpenAI[OpenAI API]
-    Backend -->|Search| Perplexity[Perplexity API]
+    User["User Browser"] -->|HTTP/WebSocket| Frontend["Frontend (Nginx/React)"]
+    Frontend -->|API Requests| Backend["Backend (FastAPI)"]
+    Backend -->|Read/Write State| Postgres[("PostgreSQL")]
+    Backend -->|Trace/Log| Phoenix["Phoenix (Arize)"]
+    Backend -->|LLM Calls| OpenAI["OpenAI API"]
+    Backend -->|Search| Perplexity["Perplexity API"]
 ```
 
 ## Detailed Component Breakdown
