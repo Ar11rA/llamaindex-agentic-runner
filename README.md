@@ -19,14 +19,18 @@ A full-stack application for building and interacting with LLM-powered agents, t
                         └─────────────────┘
 ```
 
-### Components
+## Documentation
 
-| Component | Description |
-|-----------|-------------|
-| **agent/** | Python backend with FastAPI, LlamaIndex agents, teams, and flows |
-| **agent-ui/** | React frontend with chat interface, Redux state management |
-| **Phoenix** | Arize Phoenix for LLM observability and tracing |
-| **PostgreSQL** | Database for conversation memory persistence |
+This repository contains comprehensive documentation for all aspects of the system:
+
+-   **[Architecture Overview](docs/arch/architecture.md)**: High-level system design, service interaction, and software patterns.
+-   **[Agentic Patterns](docs/arch/agentic_patterns.md)**: Deep dive into Single Agents, Multi-Agent Teams (Handoff/Orchestrator), and Event-Driven Flows.
+-   **[Backend API Service](docs/services/backend_api.md)**: API endpoints, code structure, and configuration.
+-   **[Frontend UI Service](docs/services/ui.md)**: React app structure, state management, and API integration.
+-   **[Development Guide](docs/services/development.md)**: Setup guide for local backend and frontend development.
+-   **[Testing Guide](docs/services/testing.md)**: Unit testing strategy and manual testing scenarios.
+-   **[Deployment Guide](docs/services/deployment.md)**: Docker build process, Nginx configuration, and production setup.
+-   **[Observability](docs/arch/observability.md)**: Monitoring and tracing with Arize Phoenix.
 
 ## Features
 
@@ -63,15 +67,9 @@ A full-stack application for building and interacting with LLM-powered agents, t
 
 ```bash
 cd agent
-
-# Install dependencies with uv
 uv sync
-
-# Create .env file
 cp .env.example .env
 # Edit .env with your API keys
-
-# Run the server
 uv run uvicorn main:app --reload --port 6001
 ```
 
@@ -79,11 +77,7 @@ uv run uvicorn main:app --reload --port 6001
 
 ```bash
 cd agent-ui
-
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
 ```
 
@@ -99,118 +93,16 @@ npm run dev
 | `PHOENIX_ENDPOINT` | No | Phoenix collector endpoint |
 | `MEMORY_DATABASE_URI` | No | PostgreSQL connection string |
 
-## API Endpoints
+## Agentic Capabilities
 
-### Agents (`/api/v1/agents`)
+This repository serves as a reference implementation for LlamaIndex's agentic framework. For detailed explanations, see **[Agentic Patterns](docs/arch/agentic_patterns.md)**.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | List available agents |
-| POST | `/{agent_id}/chat` | Send message (non-streaming) |
-| POST | `/{agent_id}/stream` | Send message (SSE streaming) |
-| POST | `/{agent_id}/respond` | Respond to HITL prompt |
-| DELETE | `/{agent_id}/session` | Clear session memory |
-
-### Teams (`/api/v1/teams`)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | List available teams |
-| POST | `/{team_id}/chat` | Send message (non-streaming) |
-| POST | `/{team_id}/stream` | Send message (SSE streaming) |
-| POST | `/{team_id}/respond` | Respond to HITL prompt |
-| DELETE | `/{team_id}/session` | Clear session memory |
-
-### Flows (`/api/v1/flows`)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | List available flows |
-| POST | `/{flow_id}/run` | Run flow synchronously |
-| POST | `/{flow_id}/run/async` | Start flow asynchronously |
-| GET | `/{flow_id}/run/{run_id}` | Poll async flow status |
-| GET | `/{flow_id}/run/{run_id}/steps` | Get flow execution steps |
-| POST | `/{flow_id}/stream` | Run flow with SSE streaming |
-| DELETE | `/{flow_id}/session` | Clear session |
-
-## GenAI & Agentic Concepts
-
-This repository serves as a **reference implementation** covering major patterns in LlamaIndex's agentic framework.
-
-### Core Agentic Patterns
-
-#### 1. Single Agents (ReAct Pattern)
-Tool-equipped agents that can reason and act using external tools:
-- `MathAgent` - Mathematical operations
-- `ResearchAgent` - Web search via Perplexity
-- `MarketAgent` - Market data with HITL protection
-- `WriterAgent` / `CriticAgent` - Content generation and review
-
-#### 2. Multi-Agent Teams
-Two coordination patterns implemented:
-
-| Pattern | Example | How It Works |
-|---------|---------|--------------|
-| **Handoff** | `MarketResearchTeam` | Agents use `can_handoff_to` to pass control dynamically |
-| **Orchestrator** | `ResearchMathOrchestratorTeam` | Central agent uses specialized agents as tools (`agent.as_tool()`) |
-
-#### 3. Event-Driven Flows
-Step-based execution with `@step` decorators and event routing:
-- `StoryCriticFlow` demonstrates **branching & looping**:
-  - Research → Write → Critique
-  - If rejected: loop back to rewrite (max 3 attempts)
-  - If approved: return final article
-
-### Tool Integration
-
-| Tool | Implementation | Purpose |
-|------|----------------|---------|
-| Math tools | `add()`, `multiply()` | Simple function tools |
-| Market tools | `get_index()`, `push_index()` | HITL-protected dangerous operations |
-| Web search | `web_search()` via Perplexity | External LLM as a tool |
-
-### Advanced Concepts
-
-| Concept | Description |
-|---------|-------------|
-| **Human-in-the-Loop (HITL)** | Pause workflows for human approval, serialize/restore context |
-| **Streaming (SSE)** | Real-time token streaming with `AgentStream` events |
-| **Memory Persistence** | Per-session conversation history in PostgreSQL |
-| **Async Execution** | Fire-and-forget flows with status polling API |
-| **Observability** | OpenTelemetry + Phoenix for full LLM trace visibility |
-
-### Architecture Patterns
-
-| Pattern | Implementation |
-|---------|----------------|
-| Registry Pattern | `agent_registry`, `team_registry`, `flow_registry` |
-| Base Class Abstraction | `BaseAgent`, `BaseTeam`, `BaseFlow` with shared behaviors |
-| DTO Pattern | Separate request/response schemas in `api/dto/` |
-| Session Management | Session IDs for memory isolation |
-
-## Project Structure
-
-```
-llamaindex-agents/
-├── agent/                    # Backend
-│   ├── agents/              # Single agent definitions
-│   ├── teams/               # Multi-agent teams
-│   ├── flows/               # Event-driven workflows
-│   ├── tools/               # Agent tools (math, research, etc.)
-│   ├── api/                 # FastAPI routes and DTOs
-│   ├── config/              # Settings, database, observability
-│   └── main.py              # Application entry point
-├── agent-ui/                # Frontend
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom hooks (useChat)
-│   │   ├── services/        # API client
-│   │   ├── store/           # Redux state
-│   │   └── types/           # TypeScript interfaces
-│   └── nginx.conf           # Production nginx config
-├── docker-compose.yml       # Multi-service orchestration
-└── .env.example             # Environment template
-```
+We implement three core patterns:
+1.  **Single Agents (ReAct)**: Tool-using agents (Math, Research, Market).
+2.  **Multi-Agent Teams**:
+    -   **Handoff**: Agents passing control to peers.
+    -   **Orchestrator**: A manager agent delegating tasks to sub-agents.
+3.  **Event-Driven Flows**: State machines with branching, looping, and human intervention (e.g., Story Critic Flow).
 
 ## Known Issues & Limitations
 
@@ -224,34 +116,9 @@ The application supports multiple LLM providers via a factory pattern, but not a
 | **Anthropic** | ❌ Broken | ✅ Works | `ToolCallBlock` not supported in LlamaIndex adapter |
 | **Gemini Vertex** | ❌ Not implemented | ✅ Works | Custom LLM doesn't implement tool interface |
 | **Bedrock Gateway** | ❌ Not implemented | ✅ Works | Custom LLM doesn't implement tool interface |
-| **Cohere** | ⚠️ Untested | ⚠️ Untested | Base URL parameter may not work correctly |
 
-**Tool-using agents:** `MathAgent`, `ResearchAgent`, `MarketAgent`  
-**Toolless agents:** `WriterAgent`, `CriticAgent`
-
-### Specific Issues
-
-1. **Anthropic + Tools**
-   - Error: `ValueError: Unsupported block type: <class 'llama_index.core.base.llms.types.ToolCallBlock'>`
-   - Cause: LlamaIndex's Anthropic adapter doesn't handle `FunctionAgent`'s tool call format
-   - Workaround: Use OpenAI for agents with tools
-
-2. **Custom LLMs (GeminiVertexLLM, BedrockGatewayLLM)**
-   - These implement basic `chat`/`complete` methods only
-   - Tool calling requires `FunctionCallingLLM` interface which is not implemented
-   - Use for toolless agents or flows only
-
-3. **Cohere Base URL**
-   - The `api_url` parameter may not be honored by LlamaIndex's Cohere adapter
-   - Standard Cohere API endpoint works; custom gateways untested
-
-### Recommendations
-
-- Use **OpenAI** as the default provider for full compatibility
-- Switch individual toolless agents to other providers via `provider=LLMProvider.X` parameter
-- Set `LLM_PROVIDER` environment variable to change the global default
+**Recommendation**: Use **OpenAI** as the default provider for full compatibility.
 
 ## License
 
 MIT
-
