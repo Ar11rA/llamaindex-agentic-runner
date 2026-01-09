@@ -8,6 +8,7 @@ from agents.writer_agent import WriterAgent
 from agents.critic_agent import CriticAgent
 from config import LLMProvider
 
+
 @runtime_checkable
 class AgentProtocol(Protocol):
     """Protocol that all agents must implement."""
@@ -67,14 +68,18 @@ registry = AgentRegistry()
 
 # Register available agents
 registry.register(MathAgent())
-registry.register(ResearchAgent(
-    provider=LLMProvider.OPENAI,
-    model="gpt-4.1",
-))
+registry.register(
+    ResearchAgent(
+        provider=LLMProvider.OPENAI,
+        model="gpt-4.1",
+    )
+)
 registry.register(MarketAgent())
-registry.register(WriterAgent(
-    provider=LLMProvider.ANTHROPIC,
-))
+registry.register(
+    WriterAgent(
+        provider=LLMProvider.ANTHROPIC,
+    )
+)
 registry.register(CriticAgent())
 
 __all__ = [

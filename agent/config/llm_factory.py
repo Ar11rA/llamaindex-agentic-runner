@@ -21,6 +21,7 @@ def _assert_never(value: NoReturn) -> NoReturn:
     """Assert that a code path is unreachable (exhaustive match helper)."""
     raise ValueError(f"Unsupported LLM provider: {value}")
 
+
 logger = logging.getLogger(__name__)
 
 
